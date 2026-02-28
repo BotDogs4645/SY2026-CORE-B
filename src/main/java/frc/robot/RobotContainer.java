@@ -6,10 +6,14 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.hardware.Pigeon2;
+import com.ctre.phoenix6.swerve.SwerveDrivetrain;
+import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -20,7 +24,7 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class RobotContainer {
-    private double MaxSpeed = 0.2*TunerConstants.kSpeedAt12VoltsFront.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
+    private double MaxSpeed = TunerConstants.kSpeedAt12VoltsFront.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
     /* Setting up bindings for necessary control of the swerve drive platform */
@@ -34,11 +38,64 @@ public class RobotContainer {
 
     private final CommandXboxController joystick = new CommandXboxController(0);
 
-    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+    public final static CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
+    private SwerveDrivetrainConstants drivetrainconstants = TunerConstants.DrivetrainConstants;
+    private Pigeon2 gyro = new Pigeon2(drivetrainconstants.Pigeon2Id);
     public RobotContainer() {
         configureBindings();
     }
+
+    private double fieldOrentedX(double speedx, double speedy){
+        double sinspeedx = speedx*Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getSin());
+        double cosspeedx = speedx*-Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getCos());
+        double sinspeedy = speedy*-Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getSin());
+        double cosspeedy = speedy*Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getCos());
+
+        double cosSpeed = -Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getCos());
+        double sinSpeed = Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getSin());
+        double tcosSpeed = RobotContainer.drivetrain.getState().Pose.getRotation().getCos();
+        double tsinSpeed = RobotContainer.drivetrain.getState().Pose.getRotation().getSin();
+
+
+        double dflip=-(1-Math.abs(tsinSpeed-tcosSpeed));
+
+        double flip = dflip*(cosspeedy-sinspeedy)*Math.abs(1-Math.abs(sinSpeed+cosSpeed));
+
+        double finSpeedx =sinspeedx + cosspeedx+flip;
+
+
+
+
+
+        return finSpeedx;
+    }
+    private double fieldOrentedY(double speedy, double speedx){
+        double sinspeedy = speedy*-Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getSin());
+        double cosspeedy = speedy*Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getCos());
+        double sinspeedx = speedx*Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getSin());
+        double cosspeedx = speedx*-Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getCos());
+        
+        double cosSpeed = Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getCos());
+        double sinSpeed = -Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getSin());
+        double tcosSpeed = RobotContainer.drivetrain.getState().Pose.getRotation().getCos();
+        double tsinSpeed = RobotContainer.drivetrain.getState().Pose.getRotation().getSin();
+
+
+        double dflip=-(1-Math.abs(tsinSpeed-tcosSpeed));
+        
+        double flip = dflip*(sinspeedx-cosspeedx)*Math.abs(1-Math.abs(cosSpeed+sinSpeed));
+
+
+        double finSpeedy =sinspeedy + cosspeedy+flip;
+
+
+
+
+        return finSpeedy;
+    }
+    
+
 
     private void configureBindings() {
         // Note that X is defined as forward according to WPILib convention,
@@ -46,11 +103,20 @@ public class RobotContainer {
         drivetrain.setDefaultCommand(
             // Drivetrain will execute this command periodically
             drivetrain.applyRequest(() ->
-                drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
+                drive.withVelocityY(fieldOrentedY(-joystick.getLeftY(),joystick.getLeftX()+(-joystick.getRightX()*0.02))* MaxSpeed) // Drive forward with negative Y (forward)
+                    .withVelocityX(fieldOrentedX(joystick.getLeftX()+(-joystick.getRightX()*0.02),-joystick.getLeftY())* MaxSpeed) // Drive left with negative X (left)
                     .withRotationalRate(-joystick.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
             )
         );
+
+        // drivetrain.setDefaultCommand(
+        //     // Drivetrain will execute this command periodically
+        //     drivetrain.applyRequest(() ->
+        //         drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
+        //             .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
+        //             .withRotationalRate(-joystick.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+        //     )
+        // );
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
@@ -58,11 +124,13 @@ public class RobotContainer {
         RobotModeTriggers.disabled().whileTrue(
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
-
+        // joystick.rightBumper().whileFalse((joystick.setRumble(GenericHID.RumbleType.kBothRumble,100));
         joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
-        joystick.b().whileTrue(drivetrain.applyRequest(() ->
-            point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
-        ));
+        // joystick.b().whileTrue(drivetrain.applyRequest(() ->
+        //     point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
+        // ));
+
+        
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
@@ -72,8 +140,11 @@ public class RobotContainer {
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         // Reset the field-centric heading on left bumper press.
-        joystick.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
-
+        joystick.b().onTrue(drivetrain.runOnce(() -> {
+            drivetrain.seedFieldCentric();
+            System.out.println("Oriented");
+        }));
+        
         drivetrain.registerTelemetry(logger::telemeterize);
     }
 
