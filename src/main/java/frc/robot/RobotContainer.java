@@ -20,13 +20,25 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
+// import static frc.robot.Constants.OperatorConstants.*;
+
+import frc.robot.commands.Eject;
+import frc.robot.commands.Intake;
+import frc.robot.commands.LaunchSequence;
+// import frc.robot.subsystems.CANDriveSubsystem;
+import frc.robot.subsystems.CANFuelSubsystem;
+// import frc.robot.subsystems.ClimberSubsystem;
+
+
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class RobotContainer {
-    private double MaxSpeed = TunerConstants.kSpeedAt12VoltsFront.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
+    private final CANFuelSubsystem fuelSubsystem = new CANFuelSubsystem();
+    private double slowdown = 1;
+    private double MaxSpeed = slowdown*TunerConstants.kSpeedAt12VoltsFront.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
-
+    
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
@@ -45,7 +57,19 @@ public class RobotContainer {
     public RobotContainer() {
         configureBindings();
     }
+    private void slowDown(){
+        slowdown-=0.02;
+        if (slowdown < 0.2){
+            slowdown=0.2;
+        }
 
+    }
+    private void speedUp(){
+        slowdown+=0.02;
+        if (slowdown > 1){
+            slowdown=1;
+        }
+    }
     private double fieldOrentedX(double speedx, double speedy){
         double sinspeedx = speedx*Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getSin());
         double cosspeedx = speedx*-Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getCos());
@@ -103,11 +127,30 @@ public class RobotContainer {
         drivetrain.setDefaultCommand(
             // Drivetrain will execute this command periodically
             drivetrain.applyRequest(() ->
-                drive.withVelocityY(fieldOrentedY(-joystick.getLeftY(),joystick.getLeftX()+(-joystick.getRightX()*0.02))* MaxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityX(fieldOrentedX(joystick.getLeftX()+(-joystick.getRightX()*0.02),-joystick.getLeftY())* MaxSpeed) // Drive left with negative X (left)
+                drive.withVelocityY(fieldOrentedY(-joystick.getLeftY(),joystick.getLeftX()+(-joystick.getRightX()*0.01))* MaxSpeed) // Drive forward with negative Y (forward)
+                    .withVelocityX(fieldOrentedX(joystick.getLeftX()+(-joystick.getRightX()*0.01),-joystick.getLeftY())* MaxSpeed) // Drive left with negative X (left)
                     .withRotationalRate(-joystick.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
             )
         );
+        // While the left bumper on operator controller is held, intake Fuel
+    joystick.x().whileTrue(new Intake(fuelSubsystem));
+    // While the y button on the operator controller is held, spin up for 1
+    // second, then launch fuel. When the button is released, stop.
+    joystick.y().whileTrue(new LaunchSequence(fuelSubsystem));
+    // While the A button is held on the operator controller, eject fuel back out
+    // the intake
+    joystick.a().whileTrue(new Eject(fuelSubsystem));
+
+    joystick.b().whileTrue(drivetrain.run(() -> slowDown()));
+    joystick.b().whileFalse(drivetrain.run(() -> speedUp()));
+
+    // Set the default command for the drive subsystem to the command provided by
+    // factory with the values provided by the joystick axes on the driver
+    // controller. The Y axis of the controller is inverted so that pushing the
+    // stick away from you (a negative value) drives the robot forwards (a positive
+    // value)
+
+    fuelSubsystem.setDefaultCommand(fuelSubsystem.run(() -> fuelSubsystem.stop()));
 
         // drivetrain.setDefaultCommand(
         //     // Drivetrain will execute this command periodically
@@ -125,7 +168,7 @@ public class RobotContainer {
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
         // joystick.rightBumper().whileFalse((joystick.setRumble(GenericHID.RumbleType.kBothRumble,100));
-        joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
+        joystick.leftTrigger().whileTrue(drivetrain.applyRequest(() -> brake));
         // joystick.b().whileTrue(drivetrain.applyRequest(() ->
         //     point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
         // ));
@@ -139,8 +182,8 @@ public class RobotContainer {
         joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
-        // Reset the field-centric heading on left bumper press.
-        joystick.b().onTrue(drivetrain.runOnce(() -> {
+        // Reset the field-centric heading on right DPAD press.
+        joystick.povRight().onTrue(drivetrain.runOnce(() -> {
             drivetrain.seedFieldCentric();
             System.out.println("Oriented");
         }));
