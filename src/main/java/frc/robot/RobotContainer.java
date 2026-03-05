@@ -37,6 +37,7 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 public class RobotContainer {
     private final CANFuelSubsystem fuelSubsystem = new CANFuelSubsystem();
     private double slowdown = 1;
+    private boolean slowToggled = false;
     private double MaxSpeed = slowdown*TunerConstants.kSpeedAt12VoltsFront.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
     
@@ -122,16 +123,38 @@ public class RobotContainer {
         return finSpeedy;
     }
     
-    
+    private double trueY() {
+        if (!slowToggled)
+        return joystick.getLeftY();
+        else {
+            double returnValue = joystick.getLeftY()-0.2;
+            if (returnValue > 0)
+            return (returnValue);
+            else
+            return 0;
+        }
+    }
+    private double trueX() {
+        if (!slowToggled)
+        return joystick.getLeftX();
+        else {
+            double returnValue = joystick.getLeftX()-0.2;
+            if (returnValue > 0)
+            return (returnValue);
+            else
+            return 0;
+        }
+    }
 
     private void configureBindings() {
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
         drivetrain.setDefaultCommand(
-            // Drivetrain will execute this command periodically
+            // Drivetrain will execute this command periodically 
+            //usually trueX/trueY is replaced with joystick.getLeftX/getLeftY
             drivetrain.applyRequest(() ->
-                drive.withVelocityY(fieldOrentedY(-joystick.getLeftY(),joystick.getLeftX()+(-joystick.getRightX()*0.01))* MaxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityX(fieldOrentedX(joystick.getLeftX()+(-joystick.getRightX()*0.01),-joystick.getLeftY())* MaxSpeed) // Drive left with negative X (left)
+                drive.withVelocityY(fieldOrentedY(-trueY(),trueX()+(-joystick.getRightX()*0.01))* MaxSpeed) // Drive forward with negative Y (forward)
+                    .withVelocityX(fieldOrentedX(trueX()+(-joystick.getRightX()*0.01),-trueY())* MaxSpeed) // Drive left with negative X (left)
                     .withRotationalRate(-joystick.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
             )
         );
@@ -183,6 +206,13 @@ public class RobotContainer {
         joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+
+        
+
+        //slow down the robot 
+        joystick.b().onTrue(drivetrain.runOnce(() -> {
+            slowToggled = !slowToggled;
+        }));
 
         // Reset the field-centric heading on right DPAD press.
         joystick.povRight().onTrue(drivetrain.runOnce(() -> {
