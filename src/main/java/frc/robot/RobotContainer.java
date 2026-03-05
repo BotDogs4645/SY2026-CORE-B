@@ -14,6 +14,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -54,9 +55,11 @@ public class RobotContainer {
 
     private SwerveDrivetrainConstants drivetrainconstants = TunerConstants.DrivetrainConstants;
     private Pigeon2 gyro = new Pigeon2(drivetrainconstants.Pigeon2Id);
+
     public RobotContainer() {
         configureBindings();
     }
+
     private void slowDown(){
         slowdown-=0.02;
         if (slowdown < 0.2){
@@ -119,7 +122,7 @@ public class RobotContainer {
         return finSpeedy;
     }
     
-
+    
 
     private void configureBindings() {
         // Note that X is defined as forward according to WPILib convention,
@@ -149,7 +152,7 @@ public class RobotContainer {
     // controller. The Y axis of the controller is inverted so that pushing the
     // stick away from you (a negative value) drives the robot forwards (a positive
     // value)
-
+    
     fuelSubsystem.setDefaultCommand(fuelSubsystem.run(() -> fuelSubsystem.stop()));
 
         // drivetrain.setDefaultCommand(
@@ -167,7 +170,6 @@ public class RobotContainer {
         RobotModeTriggers.disabled().whileTrue(
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
-        // joystick.rightBumper().whileFalse((joystick.setRumble(GenericHID.RumbleType.kBothRumble,100));
         joystick.leftTrigger().whileTrue(drivetrain.applyRequest(() -> brake));
         // joystick.b().whileTrue(drivetrain.applyRequest(() ->
         //     point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))

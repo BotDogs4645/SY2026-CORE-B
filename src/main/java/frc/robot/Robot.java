@@ -12,14 +12,17 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
+import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.TunerConstants;
 
 public class Robot extends TimedRobot {
     private Command m_autonomousCommand;
-
+    private final CommandXboxController joystick = new CommandXboxController(0);
     private final RobotContainer m_robotContainer;
     private SwerveDrivetrainConstants drivetrainconstants = TunerConstants.DrivetrainConstants;
     private Pigeon2 gyro = new Pigeon2(drivetrainconstants.Pigeon2Id);
@@ -31,7 +34,6 @@ public class Robot extends TimedRobot {
     public Robot() {
         m_robotContainer = new RobotContainer();
     }
-
 
 
     @Override
@@ -51,6 +53,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
+        
         m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
         if (m_autonomousCommand != null) {
@@ -66,6 +69,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
+
         if (m_autonomousCommand != null) {
             CommandScheduler.getInstance().cancel(m_autonomousCommand);
         }
@@ -73,6 +77,10 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopPeriodic() {
+        
+        // joystick.setRumble(GenericHID.RumbleType.kBothRumble,1);
+              
+
         // System.out.println(RobotContainer.drivetrain.getState().Pose.getRotation().getCos()+" "+RobotContainer.drivetrain.getState().Pose.getRotation().getSin());
     }
 
