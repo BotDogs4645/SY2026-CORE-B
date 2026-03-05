@@ -40,7 +40,7 @@ public class RobotContainer {
     private boolean slowToggled = false;
     private double MaxSpeed = slowdown*TunerConstants.kSpeedAt12VoltsFront.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
-    
+    private double slowdownMult = 0.8;
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
@@ -108,7 +108,7 @@ public class RobotContainer {
         double sinSpeed = -Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getSin());
         double tcosSpeed = RobotContainer.drivetrain.getState().Pose.getRotation().getCos();
         double tsinSpeed = RobotContainer.drivetrain.getState().Pose.getRotation().getSin();
-
+    
 
         double dflip=-(1-Math.abs(tsinSpeed-tcosSpeed));
         
@@ -127,7 +127,7 @@ public class RobotContainer {
         if (!slowToggled)
         return joystick.getLeftY();
         else {
-            double returnValue = joystick.getLeftY()-0.2;
+            double returnValue = joystick.getLeftY()*slowdownMult;
             if (returnValue > 0)
             return (returnValue);
             else
@@ -138,7 +138,7 @@ public class RobotContainer {
         if (!slowToggled)
         return joystick.getLeftX();
         else {
-            double returnValue = joystick.getLeftX()-0.2;
+            double returnValue = joystick.getLeftX()*slowdownMult;
             if (returnValue > 0)
             return (returnValue);
             else
@@ -167,8 +167,7 @@ public class RobotContainer {
     // the intake
     joystick.a().whileTrue(new Eject(fuelSubsystem));
 
-    joystick.b().whileTrue(drivetrain.run(() -> slowDown()));
-    joystick.b().whileFalse(drivetrain.run(() -> speedUp()));
+
 
     // Set the default command for the drive subsystem to the command provided by
     // factory with the values provided by the joystick axes on the driver

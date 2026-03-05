@@ -18,9 +18,15 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.ShiftConstants.shifts;
 import frc.robot.generated.TunerConstants;
-
 public class Robot extends TimedRobot {
+    private double teleopstart = 0;
+    private double lastteleopstart = 0;
+    private double countdownTimer =0;
+    private double currentcountdown = 0;
+    private shifts currentShift = shifts.SHIFT_1;
+
     private Command m_autonomousCommand;
     private final CommandXboxController joystick = new CommandXboxController(0);
     private final RobotContainer m_robotContainer;
@@ -77,7 +83,28 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopPeriodic() {
+        lastteleopstart = teleopstart;
+        teleopstart = System.currentTimeMillis();
+        countdownTimer = (teleopstart - lastteleopstart) / 1000.0;
         
+        if (countdownTimer > ShiftConstants.SHIFT_LENGTHS.get(currentShift)-ShiftConstants.SHIFT_WARNING_TIME){
+            System.out.println("WARNING: "+ShiftConstants.SHIFT_NAMES.get(currentShift)+" to end!");
+            if (Math.floor(countdownTimer) > currentcountdown){
+                currentcountdown = Math.floor(countdownTimer);
+                double timeleft = ShiftConstants.SHIFT_LENGTHS.get(currentShift)-countdownTimer;
+                System.out.println(ShiftConstants.SHIFT_NAMES.get(currentShift)+" ends in:" + String.valueOf(timeleft) + " seconds!");
+            
+            }
+            if (countdownTimer >= ShiftConstants.SHIFT_LENGTHS.get(currentShift)){
+                System.out.println("WARNING: "+ShiftConstants.SHIFT_NAMES.get(currentShift)+" Ended!");
+                currentShift = ShiftConstants.SHIFT_NEXT.get(currentShift);
+                System.out.println("Starting new shift: "+ShiftConstants.SHIFT_NAMES.get(currentShift));
+                System.out.println("    - time left"+ShiftConstants.SHIFT_NAMES.get(currentShift));
+                // TODO: finish
+            }
+        }
+
+
         // joystick.setRumble(GenericHID.RumbleType.kBothRumble,1);
               
 
