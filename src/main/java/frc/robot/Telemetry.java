@@ -85,6 +85,13 @@ public class Telemetry {
 
     /** Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger. */
     public void telemeterize(SwerveDriveState state) {
+        SmartDashboard.putString("DB/String 0", "Time Left: ");
+        SmartDashboard.putString("DB/String 5", String.valueOf((int) (ShiftConstants.SHIFT_LENGTHS.get(Robot.getShift()) - Robot.getShiftTimeLeft())));
+
+        SmartDashboard.putString("DB/String 1", "Shift: ");
+        SmartDashboard.putString("DB/String 6", String.valueOf(ShiftConstants.SHIFT_NAMES.get(Robot.getShift())));
+
+
         /* Telemeterize the swerve drive state */
         drivePose.set(state.Pose);
         driveSpeeds.set(state.Speeds);

@@ -23,10 +23,10 @@ import frc.robot.generated.TunerConstants;
 public class Robot extends TimedRobot {
     private double teleopstart = 0;
     private double lastteleopstart = 0;
-    private double countdownTimer =0;
-    private double currentcountdown = 0;
-    private shifts currentShift = shifts.SHIFT_1;
-
+    private static double countdownTimer =0;
+    private int currentcountdown = 0;
+    private static shifts currentShift = shifts.SHIFT_1;
+    private boolean hasWarned = false;
     private Command m_autonomousCommand;
     private final CommandXboxController joystick = new CommandXboxController(0);
     private final RobotContainer m_robotContainer;
@@ -40,7 +40,12 @@ public class Robot extends TimedRobot {
     public Robot() {
         m_robotContainer = new RobotContainer();
     }
-
+    public static shifts getShift(){
+        return currentShift;
+    }
+    public static double getShiftTimeLeft(){
+        return countdownTimer;
+    }
 
     @Override
     public void robotPeriodic() {
@@ -79,28 +84,40 @@ public class Robot extends TimedRobot {
         if (m_autonomousCommand != null) {
             CommandScheduler.getInstance().cancel(m_autonomousCommand);
         }
+        countdownTimer = 0;
+        currentcountdown = 0;
+        hasWarned = false;
+        currentShift = shifts.SHIFT_1;
+        teleopstart = System.currentTimeMillis();
     }
 
     @Override
     public void teleopPeriodic() {
+        //
+        //VERY IMPORTENT TODO : FIX CRASH ON GAME END (problem with getting next shift)
+        //
         lastteleopstart = teleopstart;
         teleopstart = System.currentTimeMillis();
-        countdownTimer = (teleopstart - lastteleopstart) / 1000.0;
-        
+        countdownTimer += ((teleopstart - lastteleopstart) / 1000.0);
         if (countdownTimer > ShiftConstants.SHIFT_LENGTHS.get(currentShift)-ShiftConstants.SHIFT_WARNING_TIME){
-            System.out.println("WARNING: "+ShiftConstants.SHIFT_NAMES.get(currentShift)+" to end!");
+            if (!hasWarned){
+                System.out.println("WARNING: "+ShiftConstants.SHIFT_NAMES.get(currentShift)+" to end!");
+                hasWarned=true;
+            }
             if (Math.floor(countdownTimer) > currentcountdown){
-                currentcountdown = Math.floor(countdownTimer);
-                double timeleft = ShiftConstants.SHIFT_LENGTHS.get(currentShift)-countdownTimer;
-                System.out.println(ShiftConstants.SHIFT_NAMES.get(currentShift)+" ends in:" + String.valueOf(timeleft) + " seconds!");
+                currentcountdown = (int) Math.floor(countdownTimer);
+                int timeleft = ShiftConstants.SHIFT_LENGTHS.get(currentShift)-currentcountdown;
+                System.out.println(ShiftConstants.SHIFT_NAMES.get(currentShift)+" ends in: " + String.valueOf(timeleft) + " seconds!");
             
             }
             if (countdownTimer >= ShiftConstants.SHIFT_LENGTHS.get(currentShift)){
-                System.out.println("WARNING: "+ShiftConstants.SHIFT_NAMES.get(currentShift)+" Ended!");
+                System.out.println("Alert: "+ShiftConstants.SHIFT_NAMES.get(currentShift)+" Ended!");
                 currentShift = ShiftConstants.SHIFT_NEXT.get(currentShift);
                 System.out.println("Starting new shift: "+ShiftConstants.SHIFT_NAMES.get(currentShift));
-                System.out.println("    - time left"+ShiftConstants.SHIFT_NAMES.get(currentShift));
-                // TODO: finish
+                System.out.println("   - time in shift: "+ShiftConstants.SHIFT_LENGTHS.get(currentShift));
+                countdownTimer = 0;
+                currentcountdown = 0;
+                hasWarned = false;
             }
         }
 

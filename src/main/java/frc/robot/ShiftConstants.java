@@ -5,6 +5,8 @@ import java.util.List;
 
 public class ShiftConstants {
     
+    // TODO : make the hubs active var change between auto winners and losers
+
     public static enum shifts {
         AUTO,
         TRANSITION,
