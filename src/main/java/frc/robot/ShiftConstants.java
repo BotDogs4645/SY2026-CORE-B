@@ -60,7 +60,7 @@ public class ShiftConstants {
         put(shifts.SHIFT_2,     shifts.SHIFT_3);
         put(shifts.SHIFT_3,     shifts.SHIFT_4);
         put(shifts.SHIFT_4,     shifts.END_GAME);
-        put(shifts.END_GAME,    null);
+        put(shifts.END_GAME,    shifts.END_GAME);
     }};
     public static final HashMap<shifts, String> SHIFT_NAMES = new HashMap<shifts, String>(){{
         put(shifts.AUTO,        "AUTO");

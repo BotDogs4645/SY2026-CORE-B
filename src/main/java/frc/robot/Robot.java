@@ -15,6 +15,8 @@ import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -32,6 +34,7 @@ public class Robot extends TimedRobot {
     private final RobotContainer m_robotContainer;
     private SwerveDrivetrainConstants drivetrainconstants = TunerConstants.DrivetrainConstants;
     private Pigeon2 gyro = new Pigeon2(drivetrainconstants.Pigeon2Id);
+    private ShuffleboardTab gameTab;
     /* log and replay timestamp and joystick data */
     private final HootAutoReplay m_timeAndJoystickReplay = new HootAutoReplay()
         .withTimestampReplay()
@@ -39,6 +42,11 @@ public class Robot extends TimedRobot {
 
     public Robot() {
         m_robotContainer = new RobotContainer();
+
+
+        gameTab = Shuffleboard.getTab("game");
+        Shuffleboard.selectTab("game");
+        gameTab.add("Shift", ShiftConstants.SHIFT_NAMES.get(currentShift));
     }
     public static shifts getShift(){
         return currentShift;
@@ -93,9 +101,6 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopPeriodic() {
-        //
-        //VERY IMPORTENT TODO : FIX CRASH ON GAME END (problem with getting next shift)
-        //
         lastteleopstart = teleopstart;
         teleopstart = System.currentTimeMillis();
         countdownTimer += ((teleopstart - lastteleopstart) / 1000.0);
@@ -109,7 +114,7 @@ public class Robot extends TimedRobot {
                 int timeleft = ShiftConstants.SHIFT_LENGTHS.get(currentShift)-currentcountdown;
                 System.out.println(ShiftConstants.SHIFT_NAMES.get(currentShift)+" ends in: " + String.valueOf(timeleft) + " seconds!");
             
-            }
+            }   
             if (countdownTimer >= ShiftConstants.SHIFT_LENGTHS.get(currentShift)){
                 System.out.println("Alert: "+ShiftConstants.SHIFT_NAMES.get(currentShift)+" Ended!");
                 currentShift = ShiftConstants.SHIFT_NEXT.get(currentShift);
