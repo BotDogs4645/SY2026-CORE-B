@@ -22,7 +22,6 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
 // import static frc.robot.Constants.OperatorConstants.*;
-
 import frc.robot.commands.Eject;
 import frc.robot.commands.Intake;
 import frc.robot.commands.LaunchSequence;
@@ -30,15 +29,13 @@ import frc.robot.commands.LaunchSequence;
 import frc.robot.subsystems.CANFuelSubsystem;
 // import frc.robot.subsystems.ClimberSubsystem;
 
-
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class RobotContainer {
     private final CANFuelSubsystem fuelSubsystem = new CANFuelSubsystem();
-    private double slowdown = 1;
     private boolean slowToggled = false;
-    private double MaxSpeed = slowdown*TunerConstants.kSpeedAt12VoltsFront.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
+    private double MaxSpeed = TunerConstants.kSpeedAt12VoltsFront.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
     private double slowdownMult = 0.8;
     /* Setting up bindings for necessary control of the swerve drive platform */
@@ -61,19 +58,6 @@ public class RobotContainer {
         configureBindings();
     }
 
-    private void slowDown(){
-        slowdown-=0.02;
-        if (slowdown < 0.2){
-            slowdown=0.2;
-        }
-
-    }
-    private void speedUp(){
-        slowdown+=0.02;
-        if (slowdown > 1){
-            slowdown=1;
-        }
-    }
     private double fieldOrentedX(double speedx, double speedy){
         double sinspeedx = speedx*Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getSin());
         double cosspeedx = speedx*-Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getCos());
@@ -85,16 +69,9 @@ public class RobotContainer {
         double tcosSpeed = RobotContainer.drivetrain.getState().Pose.getRotation().getCos();
         double tsinSpeed = RobotContainer.drivetrain.getState().Pose.getRotation().getSin();
 
-
         double dflip=-(1-Math.abs(tsinSpeed-tcosSpeed));
-
         double flip = dflip*(cosspeedy-sinspeedy)*Math.abs(1-Math.abs(sinSpeed+cosSpeed));
-
         double finSpeedx =sinspeedx + cosspeedx+flip;
-
-
-
-
 
         return finSpeedx;
     }
@@ -108,17 +85,10 @@ public class RobotContainer {
         double sinSpeed = -Math.abs(RobotContainer.drivetrain.getState().Pose.getRotation().getSin());
         double tcosSpeed = RobotContainer.drivetrain.getState().Pose.getRotation().getCos();
         double tsinSpeed = RobotContainer.drivetrain.getState().Pose.getRotation().getSin();
-    
 
         double dflip=-(1-Math.abs(tsinSpeed-tcosSpeed));
-        
         double flip = dflip*(sinspeedx-cosspeedx)*Math.abs(1-Math.abs(cosSpeed+sinSpeed));
-
-
         double finSpeedy =sinspeedy + cosspeedy+flip;
-
-
-
 
         return finSpeedy;
     }
@@ -128,10 +98,10 @@ public class RobotContainer {
         return joystick.getLeftY();
         else {
             double returnValue = joystick.getLeftY()*slowdownMult;
-            if (returnValue > 0)
+            // if (returnValue > 0)
             return (returnValue);
-            else
-            return 0;
+            // else
+            // return 0;
         }
     }
     private double trueX() {
@@ -139,10 +109,10 @@ public class RobotContainer {
         return joystick.getLeftX();
         else {
             double returnValue = joystick.getLeftX()*slowdownMult;
-            if (returnValue > 0)
+            // if (returnValue > 0)
             return (returnValue);
-            else
-            return 0;
+            // else
+            // return 0;
         }
     }
 
@@ -197,16 +167,12 @@ public class RobotContainer {
         //     point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
         // ));
 
-        
-
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
         joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
         joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-
-        
 
         //slow down the robot 
         joystick.b().onTrue(drivetrain.runOnce(() -> {
