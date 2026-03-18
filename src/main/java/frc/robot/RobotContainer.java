@@ -15,24 +15,33 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Command; 
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.commands.ClimbDown;
+import frc.robot.commands.ClimbUp;
 
 // import static frc.robot.Constants.OperatorConstants.*;
+import frc.robot.commands.ClimbDown;
+import frc.robot.commands.ClimbUp;
+
 import frc.robot.commands.Eject;
 import frc.robot.commands.Intake;
 import frc.robot.commands.LaunchSequence;
 // import frc.robot.subsystems.CANDriveSubsystem;
 import frc.robot.subsystems.CANFuelSubsystem;
-// import frc.robot.subsystems.ClimberSubsystem;
+import frc.robot.subsystems.ClimberSubsystem;
 
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class RobotContainer {
+    public static double velocityYAmount;
+    public static double velocityXAmount;
+    public static double rotationAmount;
+    private final ClimberSubsystem climberSubsystem = new ClimberSubsystem();
     private final CANFuelSubsystem fuelSubsystem = new CANFuelSubsystem();
     private boolean slowToggled = false;
     private double MaxSpeed = TunerConstants.kSpeedAt12VoltsFront.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
@@ -54,8 +63,26 @@ public class RobotContainer {
     private SwerveDrivetrainConstants drivetrainconstants = TunerConstants.DrivetrainConstants;
     private Pigeon2 gyro = new Pigeon2(drivetrainconstants.Pigeon2Id);
 
+    private double logVelocityXAmount(double amount){
+        velocityXAmount = amount;
+        return amount;
+    }
+
+    private double logVelocityYAmount(double amount){
+        velocityYAmount = amount;
+        return amount;
+    }
+
+    private double logRotationAmount(double amount){
+        rotationAmount = amount;
+        return amount;
+    }
+
+
     public RobotContainer() {
+
         configureBindings();
+
     }
 
     private double fieldOrentedX(double speedx, double speedy){
@@ -123,9 +150,9 @@ public class RobotContainer {
             // Drivetrain will execute this command periodically 
             //usually trueX/trueY is replaced with joystick.getLeftX/getLeftY
             drivetrain.applyRequest(() ->
-                drive.withVelocityY(fieldOrentedY(-trueY(),trueX()+(-joystick.getRightX()*0.01))* MaxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityX(fieldOrentedX(trueX()+(-joystick.getRightX()*0.01),-trueY())* MaxSpeed) // Drive left with negative X (left)
-                    .withRotationalRate(-joystick.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+                drive.withVelocityY(logVelocityYAmount( fieldOrentedY(-trueY(),trueX()+(-joystick.getRightX()*0.01))* MaxSpeed)) // Drive forward with negative Y (forward)
+                    .withVelocityX(logVelocityXAmount(fieldOrentedX(trueX()+(-joystick.getRightX()*0.01),-trueY())* MaxSpeed)) // Drive left with negative X (left)
+                    .withRotationalRate(logRotationAmount(-joystick.getRightX() * MaxAngularRate)) // Drive counterclockwise with negative X (left)
             )
         );
         // While the left bumper on operator controller is held, intake Fuel
@@ -138,13 +165,18 @@ public class RobotContainer {
     joystick.a().whileTrue(new Eject(fuelSubsystem));
 
 
+    // climber up/down controls
+    joystick.povDown().whileTrue(new ClimbDown(climberSubsystem));
+    joystick.povUp().whileTrue(new ClimbUp(climberSubsystem));
+
 
     // Set the default command for the drive subsystem to the command provided by
     // factory with the values provided by the joystick axes on the driver
     // controller. The Y axis of the controller is inverted so that pushing the
     // stick away from you (a negative value) drives the robot forwards (a positive
     // value)
-    
+    climberSubsystem.setDefaultCommand(climberSubsystem.run(() -> climberSubsystem.stop()));
+
     fuelSubsystem.setDefaultCommand(fuelSubsystem.run(() -> fuelSubsystem.stop()));
 
         // drivetrain.setDefaultCommand(
@@ -184,7 +216,6 @@ public class RobotContainer {
             drivetrain.seedFieldCentric();
             System.out.println("Oriented");
         }));
-        
         drivetrain.registerTelemetry(logger::telemeterize);
     }
 

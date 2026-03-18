@@ -106,7 +106,9 @@ public class Telemetry {
         SmartDashboard.putString("DB/String 1", "Shift: ");
         SmartDashboard.putString("DB/String 6", String.valueOf(ShiftConstants.SHIFT_NAMES.get(Robot.getShift())));
 
-        
+        SmartDashboard.putNumber("Control/given velocity x", RobotContainer.velocityXAmount);
+        SmartDashboard.putNumber("Control/given velocity y", RobotContainer.velocityYAmount);
+        SmartDashboard.putNumber("Control/given rotation", RobotContainer.rotationAmount);
 
         m_field.setRobotPose(state.Pose);
 

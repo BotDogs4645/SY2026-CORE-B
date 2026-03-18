@@ -131,6 +131,7 @@ public class Robot extends TimedRobot {
               
 
         // System.out.println(RobotContainer.drivetrain.getState().Pose.getRotation().getCos()+" "+RobotContainer.drivetrain.getState().Pose.getRotation().getSin());
+        
     }
 
     @Override
