@@ -53,7 +53,7 @@ public class RobotContainer {
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
-
+    
     private final Telemetry logger = new Telemetry(MaxSpeed);
 
     private final CommandXboxController joystick = new CommandXboxController(0);
@@ -156,7 +156,8 @@ public class RobotContainer {
             )
         );
         // While the left bumper on operator controller is held, intake Fuel
-    joystick.x().whileTrue(new Intake(fuelSubsystem));
+    joystick.x().toggleOnTrue(new Intake(fuelSubsystem));
+
     // While the y button on the operator controller is held, spin up for 1
     // second, then launch fuel. When the button is released, stop.
     joystick.y().whileTrue(new LaunchSequence(fuelSubsystem));
