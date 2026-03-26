@@ -15,6 +15,8 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command; 
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -37,6 +39,8 @@ import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
 public class RobotContainer {
     public static double velocityYAmount;
     public static double velocityXAmount;
@@ -63,6 +67,9 @@ public class RobotContainer {
     private SwerveDrivetrainConstants drivetrainconstants = TunerConstants.DrivetrainConstants;
     private Pigeon2 gyro = new Pigeon2(drivetrainconstants.Pigeon2Id);
 
+    private final SendableChooser<Command> autoChooser;
+
+
     private double logVelocityXAmount(double amount){
         velocityXAmount = amount;
         return amount;
@@ -80,8 +87,14 @@ public class RobotContainer {
 
 
     public RobotContainer() {
+        NamedCommands.registerCommand("LaunchSequence", new LaunchSequence(fuelSubsystem));
+        NamedCommands.registerCommand("Intake", new Intake(fuelSubsystem));
+        NamedCommands.registerCommand("ClimbUp", new ClimbUp(climberSubsystem));
+
 
         configureBindings();
+        autoChooser = AutoBuilder.buildAutoChooser();
+        SmartDashboard.putData("Auto Selector", autoChooser);
 
     }
 
@@ -222,20 +235,22 @@ public class RobotContainer {
 
     public Command getAutonomousCommand() {
         // Simple drive forward auton
-        final var idle = new SwerveRequest.Idle();
-        return Commands.sequence(
-            // Reset our field centric heading to match the robot
-            // facing away from our alliance station wall (0 deg).
-            drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
-            // Then slowly drive forward (away from us) for 5 seconds.
-            drivetrain.applyRequest(() ->
-                drive.withVelocityX(0.5)
-                    .withVelocityY(0)
-                    .withRotationalRate(0)
-            )
-            .withTimeout(5.0),
-            // Finally idle for the rest of auton
-            drivetrain.applyRequest(() -> idle)
-        );
+        // final var idle = new SwerveRequest.Idle();
+        // return Commands.sequence(
+        //     // Reset our field centric heading to match the robot
+        //     // facing away from our alliance station wall (0 deg).
+        //     drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
+        //     // Then slowly drive forward (away from us) for 5 seconds.
+        //     drivetrain.applyRequest(() ->
+        //         drive.withVelocityX(0.5)
+        //             .withVelocityY(0)
+        //             .withRotationalRate(0)
+        //     )
+        //     .withTimeout(5.0),
+        //     // Finally idle for the rest of auton
+        //     drivetrain.applyRequest(() -> idle)
+        // );
+        return autoChooser.getSelected();
+
     }
 }
