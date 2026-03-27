@@ -34,10 +34,6 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -95,58 +91,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             this
         )
     );
-    Pose2d getPose(){
-        return getState().Pose;
-    }
-    ChassisSpeeds getRobotRelativeSpeeds(){
-        return getState().Speeds;
-
-    }
-    public void driveRobotRelative(ChassisSpeeds speeds) {
-        // ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.2);
-        // SwerveModuleState[] setpointStates = getKinematics().toSwerveModuleStates(discreteSpeeds);
-        // SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, TunerConstants.kSpeedAt12VoltsFront.in(MetersPerSecond));
-        // SwerveModuleState[] optimizedSetpointStates = new SwerveModuleState[4];
-
-        // for (int i = 0; i < 4; i++){
-        //     optimizedSetpointStates[i]=((Object) getModule(i)).runSetPoint(setpointStates[i]);            
-        // }
-        // m_frontRight.setDesiredState(swerveModuleStates[1]);
-        // m_backLeft.setDesiredState(swerveModuleStates[2]);
-        // m_backRight.setDesiredState(swerveModuleStates[3]);        
-    }    
-        void ConfigAutoBuilder(){
-        // RobotConfig config = null;
-        // try{
-        // config = RobotConfig.fromGUISettings();
-        // } catch (Exception e) {
-        // // Handle exception as needed
-        // e.printStackTrace();
-        // }
-        // AutoBuilder.configure(
-        //     this::getPose, // Robot pose supplier
-        //     this::resetPose, // Method to reset odometry (will be called if your auto has a starting pose)
-        //     this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-        //     (speeds, feedforwards) -> driveRobotRelative(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
-        //     new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
-        //             new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
-        //             new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
-        //     ),
-        //     config, // The robot configuration
-        //     () -> {
-        //       // Boolean supplier that controls when the path will be mirrored for the red alliance
-        //       // This will flip the path being followed to the red side of the field.
-        //       // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
-
-        //       var alliance = DriverStation.getAlliance();
-        //       if (alliance.isPresent()) {
-        //         return alliance.get() == DriverStation.Alliance.Red;
-        //       }
-        //       return false;
-        //     },
-        //     this // Reference to this subsystem to set requirements
-        // );
-    }
+    
+    
     /*
      * SysId routine for characterizing rotation.
      * This is used to find PID gains for the FieldCentricFacingAngle HeadingController.
@@ -195,7 +141,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
-        ConfigAutoBuilder();
     }
 
     /**
@@ -220,7 +165,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
-        ConfigAutoBuilder();
     }
 
     /**
@@ -253,7 +197,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
-        ConfigAutoBuilder();
     }
 
     /**
